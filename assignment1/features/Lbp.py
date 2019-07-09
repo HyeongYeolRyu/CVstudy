@@ -3,6 +3,24 @@ import cv2
 import os
 import pprint
 
+
+def get_LBP_fast(image):
+        X = image
+        X = (1<<7) * (X[0:-2, 0:-2] >= X[1:-1, 1:-1]) \
+            +(1<<6) * (X[0:-2, 1:-1] >= X[1:-1, 1:-1]) \
+            +(1<<5) * (X[0:-2, 2:] >= X[1:-1, 1:-1]) \
+            +(1<<4) * (X[1:-1, 2:] >= X[1:-1, 1:-1]) \
+            +(1<<3) * (X[2:, 2:] >= X[1:-1, 1:-1]) \
+            +(1<<2) * (X[2:, 1:-1] >= X[1:-1, 1:-1]) \
+            +(1<<1) * (X[2:, :-2] >= X[1:-1, 1:-1]) \
+            +(1<<0) * (X[1:-1, :-2] >= X[1:-1, 1:-1]) 
+
+        img = np.zeros_like(image)
+        img[1:-1, 1:-1] = X    
+        hist = cv2.calcHist([img], [0], None, [256], [0,256])
+        return hist
+
+
 def split_into_blocks(data, block_size):
     height, width = data.shape
     blocks = []
@@ -31,22 +49,28 @@ def get_LBP(image):
             val |= 1 << 2 if curr <= image[h-1, w+1] else 0
             val |= 1 << 1 if curr <= image[h-1, w] else 0
             val |= 1 << 0 if curr <= image[h-1, w-1] else 0
-            lbp.append(val)      
-    
+            lbp.append(val)
+            
+    lbp = np.array(lbp).astype('uint8').reshape(height-2, width-2)
+    lbp = cv2.calcHist([lbp], [0], None, [256], [0,256]) 
     return lbp
 
 
-def extract_feature(data, block_size = 7, verbose = False):
+def extract_feature_lbp(data, block_size = 7, verbose = False):
     num = data.shape[0]
     X_feats = []
     count = 0
     for i in range(num):
+        """
         blocks = split_into_blocks(data[i], block_size = block_size)
         hists = []
         for block in blocks:
-            hist = get_LBP(block)
-            hists += hist
-        X_feats.append(hists)
+            lbp = get_LBP(block)
+            hists += lbp
+        X_feats.append(cv2.calchist( [hists], [0], None, [256], [0,256] ))
+        """
+        #X_feats.append(get_LBP(data[i]))
+        X_feats.append(get_LBP_fast(data[i]))
         count += 1
         if verbose and count % 10 == 0:
             print(str(count) + " featurizing completed.")

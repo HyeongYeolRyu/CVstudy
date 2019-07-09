@@ -97,11 +97,14 @@ def check_image(image):
     cv2.destroyAllWindows()
     
     
-def visualize_pred(faces, origin_image, y_pred):
+def visualize_pred(faces, origin_image, y_pred, y_test):
     for i, img in enumerate(origin_image):
         x,y,w,h = faces[i]
         cv2.rectangle(img, (x,y), (x+w, y+h), (255,0,0), 2)
-        cv2.putText(img, y_pred[i], (x-6, y-6), cv2.FONT_HERSHEY_PLAIN, 1, (255,0,0), 2)
+        if y_pred[i] == y_test[i]:
+            cv2.putText(img, "PRED: " + y_pred[i] + " ,TRUE: " + y_test[i], (x-6, y-6), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,0,0), 2)
+        else:
+            cv2.putText(img, "PRED: " + y_pred[i] + " ,TRUE: " + y_test[i], (x-6, y-6), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,255), 2)
         cv2.imshow("img", img)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
